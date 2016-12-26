@@ -202,7 +202,7 @@ namespace test
                 }
             }
 
-            p.WaitForExit();
+            //p.WaitForExit();
             p.Close();
         }
 
@@ -281,6 +281,7 @@ namespace test
                     file.WriteLine(nextPattern);
                 }
                 runAtalanta();
+                System.Threading.Thread.Sleep(300);         //To avoid access unfinish process
                 FC = (int)getFaultCoverage();
                 nextPattern = generateSingleTestPattern(nextPattern);
             } while (FC < targetFC);
@@ -301,7 +302,7 @@ namespace test
 
         private void button2_Click(object sender, EventArgs e)
         {
-            return_patterns("0000011", 70);
+            return_patterns("0000011", 90);
             Console.WriteLine("Done");
         }
     }
