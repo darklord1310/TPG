@@ -29,12 +29,7 @@ namespace test
         private void button1_Click(object sender, EventArgs e)
         {
             string seedVal = string.Empty;
-            string new_seqVal = string.Empty;
-            string value = string.Empty;
-            string testSeq = string.Empty;
-            int i = 0;
 
-            Array.Clear(testSeqArray, 0, testSeqArray.Length);
             if (textBox1.Text == string.Empty)
             {
                 MessageBox.Show("Please enter a seed value!");
@@ -42,32 +37,41 @@ namespace test
             else
             {
                 seedVal = textBox1.Text;
-                value = seedVal;
-                testSeq = seedVal + "\n";
-                testSeqArray[i++] = seedVal;
-
-                Cursor.Current = Cursors.WaitCursor;
-                while (seedVal != new_seqVal)
-                {
-                    new_seqVal = generateTestPattern(value);
-                    value = new_seqVal;
-                    if (seedVal != new_seqVal)
-                    {
-                        testSeq += new_seqVal + "\n";
-                        if (i < 50)
-                        {
-                            testSeqArray[i] = new_seqVal;
-                            i++;
-                        }
-                    }
-                }
-                File.WriteAllText("c200.pat", testSeq);
-                Cursor.Current = Cursors.Default;
-                Array.Clear(outputSeq, 0, outputSeq.Length);
-                outputSeq = cut.faultFreeCUT(testSeqArray);
-                //foreach(string outseq in outputSeq)
-                //    Console.WriteLine(outseq);
+                generateFullTestPattern(seedVal, 50);
+                //exhaustiveTestGeneration();
             }
+        }
+
+        private void generateFullTestPattern(string seedVal, int totalTestPattern)
+        {
+            Array.Clear(testSeqArray, 0, testSeqArray.Length);
+            string new_seqVal = string.Empty;
+            string value = seedVal;
+            string testSeq = seedVal + "\n";
+            int i = 0;
+
+            testSeqArray[i++] = value;
+            Cursor.Current = Cursors.WaitCursor;
+            while (seedVal != new_seqVal)
+            {
+                new_seqVal = generateSingleTestPattern(value);
+                value = new_seqVal;
+                if (seedVal != new_seqVal)
+                {
+                    testSeq += new_seqVal + "\n";
+                    if(i < 50)
+                        testSeqArray[i] = new_seqVal;
+                }
+                i++;
+                if (i == totalTestPattern)
+                    break;
+            }
+            File.WriteAllText(seedVal + ".pat", testSeq);
+            Cursor.Current = Cursors.Default;
+            Array.Clear(outputSeq, 0, outputSeq.Length);
+            outputSeq = cut.faultFreeCUT(testSeqArray);
+            //foreach(string outseq in outputSeq)
+            //    Console.WriteLine(outseq);
 
             //RC testing
             /*string RC = lfsrRC(outputSeq, 0);   //G25;
@@ -92,7 +96,38 @@ namespace test
             Console.WriteLine(RC); */
         }
 
-        private string generateTestPattern(string seedVal)
+
+        private void exhaustiveTestGeneration()
+        {
+            string new_seqVal = string.Empty;
+            string value,seedVal;
+            string testSeq = string.Empty;
+            int i = 0;
+
+            for (int j = 1; j < 128; j++)
+            {
+                seedVal = ToBin(j, 7);
+                value = seedVal;
+                new_seqVal = string.Empty;
+                testSeq = seedVal + "\n";
+                Cursor.Current = Cursors.WaitCursor;
+                i = 0;
+                while (seedVal != new_seqVal)
+                {
+                    new_seqVal = generateSingleTestPattern(value);
+                    value = new_seqVal;
+                    if (seedVal != new_seqVal)
+                        testSeq += new_seqVal + "\n";
+                    i++;
+                    if (i == 49)
+                        break;
+                }
+                File.WriteAllText(atalantaDir + "\\test.pat", testSeq);
+            }
+            Cursor.Current = Cursors.Default;
+        }
+
+        private string generateSingleTestPattern(string seedVal)
         {
             //Polynomial characteristic: 1 + x^1 + x^7
             int[,] companion_matrix = new int[,] { {0,1,0,0,0,0,0 },
@@ -166,6 +201,9 @@ namespace test
                     sw.WriteLine("Atalanta-M -S -t test.pat -P test.rep -v c200.bench");
                 }
             }
+
+            p.WaitForExit();
+            p.Close();
         }
 
         private double getFaultCoverage()
@@ -188,9 +226,83 @@ namespace test
             return Math.Round(fc, 2);
         }
 
+        private string searchASeed(int noOfPI, int targetFaultCoverage)
+        {
+            int BestCost = 50;  // since 50 test vectors is all we need
+            double P_findBetterSolution = 1;
+            double p = 0.0;
+            double temperature = 30000;
+            string seed, BestSeed = "";
+            int cost, deltaCost;
+            List<string> repeatedSeed = new List<string>();
+            Random rnd = new Random();
+            while(P_findBetterSolution > p)
+            {
+                seed = new_seed(noOfPI);
+                while(repeatedSeed.Exists(element => element == seed))
+                {
+                    seed = new_seed(noOfPI);
+                }
+                repeatedSeed.Add(seed);
+                cost = return_patterns(seed,targetFaultCoverage);
+                deltaCost = cost - BestCost;
+                if(deltaCost <= 0)
+                {
+                    BestCost = cost;
+                    BestSeed = seed;
+                }
+                else
+                {
+                    p = rnd.NextDouble();
+                    P_findBetterSolution = Math.Exp(-deltaCost/temperature);
+                }
+                temperature--;
+                temperature = temperature * 0.85;
+            }
+            return BestSeed;
+        }
+
+        private int return_patterns(string seed, int targetFC)
+        {
+            int FC = 0;
+            int numberOfPatterns = 0;
+            string nextPattern = seed;
+
+            if (new FileInfo(atalantaDir + "\\test.pat").Length != 0)
+            {
+                File.WriteAllText(atalantaDir + "\\test.pat", string.Empty);
+            }
+
+            do
+            {
+                numberOfPatterns++;
+                using (StreamWriter file = new StreamWriter(atalantaDir + "\\test.pat", true))
+                {
+                    file.WriteLine(nextPattern);
+                }
+                runAtalanta();
+                FC = (int)getFaultCoverage();
+                nextPattern = generateSingleTestPattern(nextPattern);
+            } while (FC < targetFC);
+
+            return numberOfPatterns;
+        }
+
+        private string new_seed(int no)
+        {
+            Random rnd = new Random();
+            return ToBin(rnd.Next(1,no),7);
+        }
+
+        public static string ToBin(int value, int len)
+        {
+            return (len > 1 ? ToBin(value >> 1, len - 1) : null) + "01"[value & 1];
+        }
+
         private void button2_Click(object sender, EventArgs e)
         {
-            //runAtalanta();
+            return_patterns("0000011", 70);
+            Console.WriteLine("Done");
         }
     }
 }
