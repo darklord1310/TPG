@@ -8,12 +8,18 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace test
 {
     public partial class Form1 : Form
     {
-        //List<string> gen_pattern = new List<string>();
+        string atalantaDir = Directory.GetCurrentDirectory() + "\\atalanta";
+
+        CUT cut = new CUT();
+        string[] outputSeq = new string[50];
+        string[] testSeqArray = new string[50];
 
         public Form1()
         {
@@ -22,16 +28,19 @@ namespace test
 
         private void button1_Click(object sender, EventArgs e)
         {
-            string seedVal = "";
+            string seedVal = string.Empty;
 
-            if (textBox1.Text != "")
+            if (textBox1.Text == string.Empty)
+            {
+                MessageBox.Show("Please enter a seed value!");
+            }
+            else
+            {
                 seedVal = textBox1.Text;
 
-            //seedVal = ReverseString(seedVal);   // reverse the string because it should start with LSB first
             //generateFullTestPattern(seedVal,false);
             exhaustiveTestGeneration();
-            //generateSingleTestPattern(seedVal);
-
+            }
         }
 
         private static string ReverseString(string s)
@@ -41,62 +50,73 @@ namespace test
             return new string(arr);
         }
 
-        private void generateFullTestPattern(string seedVal, bool limit50)
+        private void generateFullTestPattern(string seedVal, int totalTestPattern)
         {
-            string new_seqVal = "";
+            Array.Clear(testSeqArray, 0, testSeqArray.Length);
+            string new_seqVal = string.Empty;
             string value = seedVal;
             string testSeq = seedVal + "\n";
             int i = 0;
 
-            if (limit50 == true)
-            {
-                value = seedVal;
-                new_seqVal = "";
-                Cursor.Current = Cursors.WaitCursor;
-
+            testSeqArray[i++] = value;
+            Cursor.Current = Cursors.WaitCursor;
                 while (seedVal != new_seqVal)
                 {
                     new_seqVal = generateSingleTestPattern(value);
                     value = new_seqVal;
                     if (seedVal != new_seqVal)
+                {
                         testSeq += new_seqVal + "\n";
+                    if(i < 50)
+                        testSeqArray[i] = new_seqVal;
+                }
                     i++;
-                    if (i == 49)
+                if (i == totalTestPattern)
                         break;
                 }
                 File.WriteAllText(seedVal + ".pat", testSeq);
-            }
-            else
-            {
-                value = seedVal;
-                new_seqVal = "";
-                Cursor.Current = Cursors.WaitCursor;
-
-                while (seedVal != new_seqVal)
-                {
-                    new_seqVal = generateSingleTestPattern(value);
-                    value = new_seqVal;
-                    if (seedVal != new_seqVal)
-                        testSeq += new_seqVal + "\n";
-                }
-                File.WriteAllText(seedVal + ".pat", testSeq);
-            }
             Cursor.Current = Cursors.Default;
-        }
+            Array.Clear(outputSeq, 0, outputSeq.Length);
+            outputSeq = cut.faultFreeCUT(testSeqArray);
+            //foreach(string outseq in outputSeq)
+            //    Console.WriteLine(outseq);
+
+            //RC testing
+            /*string RC = lfsrRC(outputSeq, 0);   //G25;
+            Console.WriteLine(RC);
+            RC = lfsrRC(outputSeq, 1);          //G26;
+            Console.WriteLine(RC);
+            RC = lfsrRC(outputSeq, 2);          //G27;
+            Console.WriteLine(RC);
+            RC = lfsrRC(outputSeq, 3);          //G28;
+            Console.WriteLine(RC);
+
+            //G28 sa1
+            Array.Clear(outputSeq, 0, outputSeq.Length);
+            outputSeq = cut.G3sa0CUT(testSeqArray);
+            RC = lfsrRC(outputSeq, 0);          //G25;
+            Console.WriteLine("\n" + RC);
+            RC = lfsrRC(outputSeq, 1);          //G26;
+            Console.WriteLine(RC);
+            RC = lfsrRC(outputSeq, 2);          //G27;
+            Console.WriteLine(RC);
+            RC = lfsrRC(outputSeq, 3);          //G28;
+            Console.WriteLine(RC); */
+                }
 
 
         private void exhaustiveTestGeneration()
         {
-            string new_seqVal = "";
+            string new_seqVal = string.Empty;
             string value,seedVal;
-            string testSeq = "";
+            string testSeq = string.Empty;
             int i = 0;
 
             for (int j = 1; j < 128; j++)
             {
                 seedVal = ToBin(j, 7);
                 value = seedVal;
-                new_seqVal = "";
+                new_seqVal = string.Empty;
                 testSeq = seedVal + "\n";
                 Cursor.Current = Cursors.WaitCursor;
                 i = 0;
@@ -110,14 +130,14 @@ namespace test
                     if (i == 49)
                         break;
                 }
-                File.WriteAllText(seedVal + ".pat", testSeq);
+                File.WriteAllText(atalantaDir + "\\test.pat", testSeq);
             }
             Cursor.Current = Cursors.Default;
         }
 
-
         private string generateSingleTestPattern(string seedVal)
         {
+            //Polynomial characteristic: 1 + x^1 + x^7
             int[,] companion_matrix = new int[,] { {0,1,0,0,0,0,0 },
                                                    {0,0,1,0,0,0,0 },
                                                    {0,0,0,1,0,0,0 },
@@ -125,8 +145,6 @@ namespace test
                                                    {0,0,0,0,0,1,0 },
                                                    {0,0,0,0,0,0,1 },
                                                    {1,1,0,0,0,0,0 } };
-            
-
             /*
             int[,] companion_matrix = new int[,] { {0,0,0,0,0,0,1 },
                                                    {1,0,0,0,0,0,1 },
@@ -136,9 +154,7 @@ namespace test
                                                    {0,0,0,0,1,0,0 },
                                                    {0,0,0,0,0,1,0 } }; // JH's test matrix
             */
-
-            string new_seqVal = "";
-            int[] mul_result = new int[7];
+            string new_seqVal = string.Empty;
             int r, c;   // r = row, c = column
             int XOR_value = 0;
 
@@ -147,26 +163,82 @@ namespace test
                 for (c = 0; c < 7; c++)     // multiply the row, r of companion matrix to the column, c of seed value 
                 {
                     if (c == 0)
-                        XOR_value = companion_matrix[r, c] * convertCharToInt(seedVal[c]);
+                        XOR_value = companion_matrix[r, c] * (int)char.GetNumericValue(seedVal[c]);
                     else
-                    {
-                        if ((companion_matrix[r, c] * convertCharToInt(seedVal[c])) != XOR_value)
-                            XOR_value = 1;
-                        else
-                            XOR_value = 0;
-                    }
+                        XOR_value ^= companion_matrix[r, c] * (int)char.GetNumericValue(seedVal[c]);
                 }
                 new_seqVal += XOR_value.ToString();
             }
             return new_seqVal;
         }
 
-        private int convertCharToInt(char c)
+        //Polynomial characteristic: 1 + x^1 + x^3 + x^7
+        private string lfsrRC(string[] poData, int outputIndex)
         {
-            if (c == '0')
-                return 0;
-            else
-                return 1;
+            int[] output = new int[7];
+            string rcOut = string.Empty;
+            
+            for(int i = 0; i < poData.Length; i++)
+                    {
+                output[6] = output[5];
+                output[5] = output[4];
+                output[4] = output[3];
+                output[3] = Convert.ToInt32(cut.XOR(intToBool(output[6]), intToBool(output[2])));
+                output[2] = output[1];
+                output[1] = Convert.ToInt32(cut.XOR(intToBool(output[6]), intToBool(output[0])));
+                output[0] = Convert.ToInt32(cut.XOR(intToBool(output[6]), charToBool(poData[i][outputIndex])));
+            }
+
+            return rcOut = string.Join("", output);
+                    }
+
+        private bool intToBool(int n){ return (n == 0) ? true : false; }
+
+        private bool charToBool(char n) { return (n == '0') ? true : false; }
+
+        private void runAtalanta()
+        {
+            Process p = new Process();
+            ProcessStartInfo info = new ProcessStartInfo();
+            info.WorkingDirectory = atalantaDir;
+            info.FileName = "cmd.exe";
+            info.CreateNoWindow = true;
+            info.RedirectStandardInput = true;
+            info.UseShellExecute = false;
+
+            p.StartInfo = info;
+            p.Start();
+
+            using (StreamWriter sw = p.StandardInput)
+            {
+                if (sw.BaseStream.CanWrite)
+                {
+                    sw.WriteLine("Atalanta-M -S -t test.pat -P test.rep -v c200.bench");
+                }
+            }
+
+            //p.WaitForExit();
+            p.Close();
+        }
+
+        private double getFaultCoverage()
+        {
+            double fc = 0;
+            int totalFault = 0, detectedFault = 0;
+
+            string[] lines = File.ReadAllLines(atalantaDir + "\\test.rep", Encoding.UTF8);
+            foreach (string line in lines)
+        {
+                if(Regex.IsMatch(line, @"\bfaults\b"))
+                    totalFault = Convert.ToInt32(Regex.Match(line, @"\d+").Value);
+
+                if (Regex.IsMatch(line, @"\bd_faults\b"))
+                    detectedFault = Convert.ToInt32(Regex.Match(line, @"\d+").Value);
+            }
+
+            fc = (double)detectedFault / (double)totalFault * 100;
+
+            return Math.Round(fc, 2);
         }
 
         private string searchASeed(int noOfPI, int targetFaultCoverage)
@@ -209,18 +281,28 @@ namespace test
         {
             int FC = 0;
             int numberOfPatterns = 0;
+            string nextPattern = seed;
 
-            /*
-            while(FC < targetFC)
+            if (new FileInfo(atalantaDir + "\\test.pat").Length != 0)
             {
-                //FC = generateTestPattern(seed);
-                numberOfPatterns++;
+                File.WriteAllText(atalantaDir + "\\test.pat", string.Empty);
             }
-            */
-            //return numberOfPatterns;
-            return 30;
-        }
 
+            do
+            {
+                numberOfPatterns++;
+                using (StreamWriter file = new StreamWriter(atalantaDir + "\\test.pat", true))
+                {
+                    file.WriteLine(nextPattern);
+        }
+                runAtalanta();
+                System.Threading.Thread.Sleep(300);         //To avoid access unfinish process
+                FC = (int)getFaultCoverage();
+                nextPattern = generateSingleTestPattern(nextPattern);
+            } while (FC < targetFC);
+
+            return numberOfPatterns;
+        }
 
         private string new_seed(int no)
         {
@@ -228,10 +310,15 @@ namespace test
             return ToBin(rnd.Next(1,no),7);
         }
 
-
         public static string ToBin(int value, int len)
         {
             return (len > 1 ? ToBin(value >> 1, len - 1) : null) + "01"[value & 1];
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            return_patterns("0000011", 90);
+            Console.WriteLine("Done");
         }
     }
 }
