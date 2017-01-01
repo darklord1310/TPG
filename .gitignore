@@ -12,7 +12,6 @@
 
 # Build results
 [Dd]ebug/
-![Dd]ebug/atalanta/
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
@@ -21,6 +20,7 @@ x86/
 build/
 bld/
 [Bb]in/
+!bin/Debug/atalanta/*
 [Oo]bj/
 
 # Visual Studio 2015 cache/options directory
