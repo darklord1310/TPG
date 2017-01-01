@@ -27,8 +27,18 @@ namespace test
             if (textBox1.Text != "")
                 seedVal = textBox1.Text;
 
+            //seedVal = ReverseString(seedVal);   // reverse the string because it should start with LSB first
             //generateFullTestPattern(seedVal,false);
             exhaustiveTestGeneration();
+            //generateSingleTestPattern(seedVal);
+
+        }
+
+        private static string ReverseString(string s)
+        {
+            char[] arr = s.ToCharArray();
+            Array.Reverse(arr);
+            return new string(arr);
         }
 
         private void generateFullTestPattern(string seedVal, bool limit50)
@@ -38,7 +48,7 @@ namespace test
             string testSeq = seedVal + "\n";
             int i = 0;
 
-            if(limit50 == true)
+            if (limit50 == true)
             {
                 value = seedVal;
                 new_seqVal = "";
@@ -115,6 +125,18 @@ namespace test
                                                    {0,0,0,0,0,1,0 },
                                                    {0,0,0,0,0,0,1 },
                                                    {1,1,0,0,0,0,0 } };
+            
+
+            /*
+            int[,] companion_matrix = new int[,] { {0,0,0,0,0,0,1 },
+                                                   {1,0,0,0,0,0,1 },
+                                                   {0,1,0,0,0,0,0 },
+                                                   {0,0,1,0,0,0,0 },
+                                                   {0,0,0,1,0,0,0 },
+                                                   {0,0,0,0,1,0,0 },
+                                                   {0,0,0,0,0,1,0 } }; // JH's test matrix
+            */
+
             string new_seqVal = "";
             int[] mul_result = new int[7];
             int r, c;   // r = row, c = column
@@ -124,8 +146,6 @@ namespace test
             {
                 for (c = 0; c < 7; c++)     // multiply the row, r of companion matrix to the column, c of seed value 
                 {
-                    //Console.WriteLine("Companion Matrix [" + r + ", " + c + "] = " + companion_matrix[r, c]);
-                    //Console.WriteLine("Seed value index " + c + " = " + new_seedVal[c]);
                     if (c == 0)
                         XOR_value = companion_matrix[r, c] * convertCharToInt(seedVal[c]);
                     else
