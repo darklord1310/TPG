@@ -37,9 +37,8 @@ namespace test
             else
             {
                 seedVal = textBox1.Text;
-
-            //generateFullTestPattern(seedVal,false);
-            exhaustiveTestGeneration();
+                //generateFullTestPattern(seedVal,false);
+                exhaustiveTestGeneration();
             }
         }
 
@@ -60,21 +59,21 @@ namespace test
 
             testSeqArray[i++] = value;
             Cursor.Current = Cursors.WaitCursor;
-                while (seedVal != new_seqVal)
+            while (seedVal != new_seqVal)
+            {
+                new_seqVal = generateSingleTestPattern(value);
+                value = new_seqVal;
+                if (seedVal != new_seqVal)
                 {
-                    new_seqVal = generateSingleTestPattern(value);
-                    value = new_seqVal;
-                    if (seedVal != new_seqVal)
-                {
-                        testSeq += new_seqVal + "\n";
+                    testSeq += new_seqVal + "\n";
                     if(i < 50)
                         testSeqArray[i] = new_seqVal;
                 }
-                    i++;
+                i++;
                 if (i == totalTestPattern)
-                        break;
-                }
-                File.WriteAllText(seedVal + ".pat", testSeq);
+                    break;
+            }
+            File.WriteAllText(seedVal + ".pat", testSeq);
             Cursor.Current = Cursors.Default;
             Array.Clear(outputSeq, 0, outputSeq.Length);
             outputSeq = cut.faultFreeCUT(testSeqArray);
@@ -102,8 +101,7 @@ namespace test
             Console.WriteLine(RC);
             RC = lfsrRC(outputSeq, 3);          //G28;
             Console.WriteLine(RC); */
-                }
-
+        }
 
         private void exhaustiveTestGeneration()
         {
@@ -155,6 +153,7 @@ namespace test
                                                    {0,0,0,0,0,1,0 } }; // JH's test matrix
             */
             string new_seqVal = string.Empty;
+            
             int r, c;   // r = row, c = column
             int XOR_value = 0;
 
@@ -179,7 +178,7 @@ namespace test
             string rcOut = string.Empty;
             
             for(int i = 0; i < poData.Length; i++)
-                    {
+            {
                 output[6] = output[5];
                 output[5] = output[4];
                 output[4] = output[3];
@@ -190,7 +189,7 @@ namespace test
             }
 
             return rcOut = string.Join("", output);
-                    }
+        }
 
         private bool intToBool(int n){ return (n == 0) ? true : false; }
 
@@ -228,7 +227,7 @@ namespace test
 
             string[] lines = File.ReadAllLines(atalantaDir + "\\test.rep", Encoding.UTF8);
             foreach (string line in lines)
-        {
+            {
                 if(Regex.IsMatch(line, @"\bfaults\b"))
                     totalFault = Convert.ToInt32(Regex.Match(line, @"\d+").Value);
 
@@ -294,7 +293,7 @@ namespace test
                 using (StreamWriter file = new StreamWriter(atalantaDir + "\\test.pat", true))
                 {
                     file.WriteLine(nextPattern);
-        }
+                }
                 runAtalanta();
                 System.Threading.Thread.Sleep(300);         //To avoid access unfinish process
                 FC = (int)getFaultCoverage();
