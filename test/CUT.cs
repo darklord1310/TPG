@@ -9,12 +9,11 @@ namespace test
     class CUT
     {
         public CUT() { }
-
-        public string[] faultFreeCUT(string[] inputs)
+                
+        public List<string> faultFreeCUT(List<string> inputs)
         {
             bool[] G = new bool[29];
-            string[] output = new string[inputs.Count()];
-            int i = 0;
+            List<string> output = new List<string>();
 
             foreach (string input in inputs)
             {
@@ -47,21 +46,19 @@ namespace test
                 G[26] = NOR(G[18], G[5]);
                 G[27] = NOR(G[24], G[14]);
                 G[28] = NOR(G[13], G[20]);
-                output[i] += Convert.ToInt32(G[25]).ToString() +
-                             Convert.ToInt32(G[26]).ToString() +
-                             Convert.ToInt32(G[27]).ToString() +
-                             Convert.ToInt32(G[28]).ToString();
-                i++;
+                output.Add(Convert.ToInt32(G[25]).ToString() +
+                           Convert.ToInt32(G[26]).ToString() +
+                           Convert.ToInt32(G[27]).ToString() +
+                           Convert.ToInt32(G[28]).ToString());
             }
 
             return output;
         }
 
-        public string[] G28sa1CUT(string[] inputs)
+        public List<string> G28sa1CUT(List<string> inputs)
         {
             bool[] G = new bool[29];
-            string[] output = new string[inputs.Count()];
-            int i = 0;
+            List<string> output = new List<string>();
 
             foreach (string input in inputs)
             {
@@ -94,21 +91,19 @@ namespace test
                 G[26] = NOR(G[18], G[5]);
                 G[27] = NOR(G[24], G[14]);
                 G[28] = true;
-                output[i] += Convert.ToInt32(G[25]).ToString() +
-                             Convert.ToInt32(G[26]).ToString() +
-                             Convert.ToInt32(G[27]).ToString() +
-                             Convert.ToInt32(G[28]).ToString();
-                i++;
+                output.Add(Convert.ToInt32(G[25]).ToString() +
+                           Convert.ToInt32(G[26]).ToString() +
+                           Convert.ToInt32(G[27]).ToString() +
+                           Convert.ToInt32(G[28]).ToString());
             }
 
             return output;
         }
 
-        public string[] G3sa0CUT(string[] inputs)
+        public List<string> G3sa0CUT(List<string> inputs)
         {
             bool[] G = new bool[29];
-            string[] output = new string[inputs.Count()];
-            int i = 0;
+            List<string> output = new List<string>();
 
             foreach (string input in inputs)
             {
@@ -141,21 +136,19 @@ namespace test
                 G[26] = NOR(G[18], G[5]);
                 G[27] = NOR(G[24], G[14]);
                 G[28] = NOR(G[13], G[20]);
-                output[i] += Convert.ToInt32(G[25]).ToString() +
-                             Convert.ToInt32(G[26]).ToString() +
-                             Convert.ToInt32(G[27]).ToString() +
-                             Convert.ToInt32(G[28]).ToString();
-                i++;
+                output.Add(Convert.ToInt32(G[25]).ToString() +
+                           Convert.ToInt32(G[26]).ToString() +
+                           Convert.ToInt32(G[27]).ToString() +
+                           Convert.ToInt32(G[28]).ToString());
             }
 
             return output;
         }
 
-        public string[] G5toG10sa1CUT(string[] inputs)
+        public List<string> G5toG10sa1CUT(List<string> inputs)
         {
             bool[] G = new bool[29];
-            string[] output = new string[inputs.Count()];
-            int i = 0;
+            List<string> output = new List<string>();
 
             foreach (string input in inputs)
             {
@@ -188,11 +181,10 @@ namespace test
                 G[26] = NOR(G[18], G[5]);
                 G[27] = NOR(G[24], G[14]);
                 G[28] = NOR(G[13], G[20]);
-                output[i] += Convert.ToInt32(G[25]).ToString() +
-                             Convert.ToInt32(G[26]).ToString() +
-                             Convert.ToInt32(G[27]).ToString() +
-                             Convert.ToInt32(G[28]).ToString();
-                i++;
+                output.Add(Convert.ToInt32(G[25]).ToString() +
+                           Convert.ToInt32(G[26]).ToString() +
+                           Convert.ToInt32(G[27]).ToString() +
+                           Convert.ToInt32(G[28]).ToString());
             }
 
             return output;

@@ -4,6 +4,6 @@ ov: 4
 i_patterns: 0
 patterns: 0
 faults: 82
-d_faults: 74
+d_faults: 82
 r_faults: 0
 time: 0.007

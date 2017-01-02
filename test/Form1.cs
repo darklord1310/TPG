@@ -15,11 +15,13 @@ namespace test
 {
     public partial class Form1 : Form
     {
+        CUT cut = new CUT();
+        List<string> outputSeq = new List<string>();
+        List<string> testSeqArray = new List<string>();
+        List<string> initialSeed = new List<string>();
         string atalantaDir = Directory.GetCurrentDirectory() + "\\atalanta";
 
-        CUT cut = new CUT();
-        string[] outputSeq = new string[50];
-        string[] testSeqArray = new string[50];
+        public delegate List<string> generateOutputSeq(List<string> inputs);
 
         public Form1()
         {
@@ -37,8 +39,10 @@ namespace test
             else
             {
                 seedVal = textBox1.Text;
-                //generateFullTestPattern(seedVal,false);
-                exhaustiveTestGeneration();
+                generateFullTestPattern(seedVal, 50);
+                //exhaustiveTestGeneration();
+                generateRCSignature(cut.faultFreeCUT);
+                generateRCSignature(cut.G3sa0CUT);
             }
         }
 
@@ -51,13 +55,14 @@ namespace test
 
         private void generateFullTestPattern(string seedVal, int totalTestPattern)
         {
-            Array.Clear(testSeqArray, 0, testSeqArray.Length);
+            testSeqArray.TrimExcess();
+            testSeqArray.Clear();
             string new_seqVal = string.Empty;
             string value = seedVal;
             string testSeq = seedVal + "\n";
-            int i = 0;
+            int i = 1;
 
-            testSeqArray[i++] = value;
+            testSeqArray.Add(value);
             Cursor.Current = Cursors.WaitCursor;
             while (seedVal != new_seqVal)
             {
@@ -66,47 +71,21 @@ namespace test
                 if (seedVal != new_seqVal)
                 {
                     testSeq += new_seqVal + "\n";
-                    if(i < 50)
-                        testSeqArray[i] = new_seqVal;
+                    if(i < totalTestPattern)
+                        testSeqArray.Add(new_seqVal);
                 }
                 i++;
                 if (i == totalTestPattern)
                     break;
             }
-            File.WriteAllText(seedVal + ".pat", testSeq);
-            Cursor.Current = Cursors.Default;
-            Array.Clear(outputSeq, 0, outputSeq.Length);
-            outputSeq = cut.faultFreeCUT(testSeqArray);
-            //foreach(string outseq in outputSeq)
-            //    Console.WriteLine(outseq);
-
-            //RC testing
-            /*string RC = lfsrRC(outputSeq, 0);   //G25;
-            Console.WriteLine(RC);
-            RC = lfsrRC(outputSeq, 1);          //G26;
-            Console.WriteLine(RC);
-            RC = lfsrRC(outputSeq, 2);          //G27;
-            Console.WriteLine(RC);
-            RC = lfsrRC(outputSeq, 3);          //G28;
-            Console.WriteLine(RC);
-
-            //G28 sa1
-            Array.Clear(outputSeq, 0, outputSeq.Length);
-            outputSeq = cut.G3sa0CUT(testSeqArray);
-            RC = lfsrRC(outputSeq, 0);          //G25;
-            Console.WriteLine("\n" + RC);
-            RC = lfsrRC(outputSeq, 1);          //G26;
-            Console.WriteLine(RC);
-            RC = lfsrRC(outputSeq, 2);          //G27;
-            Console.WriteLine(RC);
-            RC = lfsrRC(outputSeq, 3);          //G28;
-            Console.WriteLine(RC); */
+            File.WriteAllText(atalantaDir + "\\" + seedVal + ".pat", testSeq);
+            Cursor.Current = Cursors.Default;         
         }
 
         private void exhaustiveTestGeneration()
         {
             string new_seqVal = string.Empty;
-            string value,seedVal;
+            string value, seedVal;
             string testSeq = string.Empty;
             int i = 0;
 
@@ -128,7 +107,7 @@ namespace test
                     if (i == 49)
                         break;
                 }
-                File.WriteAllText(atalantaDir + "\\test.pat", testSeq);
+                File.WriteAllText(seedVal + ".pat", testSeq);
             }
             Cursor.Current = Cursors.Default;
         }
@@ -172,12 +151,12 @@ namespace test
         }
 
         //Polynomial characteristic: 1 + x^1 + x^3 + x^7
-        private string lfsrRC(string[] poData, int outputIndex)
+        private string lfsrRC(List<string> poData, int outputIndex)
         {
             int[] output = new int[7];
             string rcOut = string.Empty;
             
-            for(int i = 0; i < poData.Length; i++)
+            for(int i = 0; i < poData.Count(); i++)
             {
                 output[6] = output[5];
                 output[5] = output[4];
@@ -189,6 +168,26 @@ namespace test
             }
 
             return rcOut = string.Join("", output);
+        }
+
+        private void generateRCSignature(generateOutputSeq f)
+        {
+            outputSeq.TrimExcess();
+            outputSeq.Clear();
+
+            //Fault free signature
+            outputSeq = f(testSeqArray);     //Get output sequence from CUT
+            //foreach(string outseq in outputSeq)
+            //    Console.WriteLine(outseq);
+
+            string RC = string.Empty;
+            for (int i = 0; i < 4; i++)
+            {
+                RC = lfsrRC(outputSeq, i);
+                Console.Write(RC + " ");
+            }
+
+            Console.WriteLine();
         }
 
         private bool intToBool(int n){ return (n == 0) ? true : false; }
@@ -207,7 +206,7 @@ namespace test
 
             p.StartInfo = info;
             p.Start();
-
+            //Console.WriteLine("Runnning atalanta...");    //debug purpose
             using (StreamWriter sw = p.StandardInput)
             {
                 if (sw.BaseStream.CanWrite)
@@ -216,7 +215,7 @@ namespace test
                 }
             }
 
-            //p.WaitForExit();
+            p.WaitForExit();
             p.Close();
         }
 
@@ -246,31 +245,40 @@ namespace test
             double P_findBetterSolution = 1;
             double p = 0.0;
             double temperature = 30000;
-            string seed, BestSeed = "";
+            string seed, BestSeed = string.Empty;
             int cost, deltaCost;
             List<string> repeatedSeed = new List<string>();
             Random rnd = new Random();
-            while(P_findBetterSolution > p)
+
+            Console.WriteLine("\n****Start search best seed****");
+            repeatedSeed = new List<string>(initialSeed);           //clone the list to not include the best seed
+            while (P_findBetterSolution > p)
             {
                 seed = new_seed(noOfPI);
+                if (repeatedSeed.Count() == 127) break;
                 while(repeatedSeed.Exists(element => element == seed))
                 {
                     seed = new_seed(noOfPI);
                 }
+                Console.WriteLine("generated new seed = {0}", seed);    //debug purpose
                 repeatedSeed.Add(seed);
                 cost = return_patterns(seed,targetFaultCoverage);
+                Console.WriteLine("cost = {0}", cost.ToString());       //debug purpose
                 deltaCost = cost - BestCost;
                 if(deltaCost <= 0)
                 {
                     BestCost = cost;
                     BestSeed = seed;
+                    Console.WriteLine("Best cost = {0}", BestCost.ToString());   //debug purpose
                 }
                 else
                 {
                     p = rnd.NextDouble();
                     P_findBetterSolution = Math.Exp(-deltaCost/temperature);
+                    Console.WriteLine("P_findBetterSolution = {0}", P_findBetterSolution.ToString());   //debug purpose
                 }
-                temperature--;
+                temperature-=30;
+                if (temperature <= 0) break;
                 temperature = temperature * 0.85;
             }
             return BestSeed;
@@ -306,7 +314,7 @@ namespace test
         private string new_seed(int no)
         {
             Random rnd = new Random();
-            return ToBin(rnd.Next(1,no),7);
+            return ToBin(rnd.Next(1, (int)Math.Pow(2, no)),7);
         }
 
         public static string ToBin(int value, int len)
@@ -316,8 +324,21 @@ namespace test
 
         private void button2_Click(object sender, EventArgs e)
         {
-            return_patterns("0000011", 90);
-            Console.WriteLine("Done");
+            //for (int i = 0; i < 10; i++)
+            //    Console.WriteLine(return_patterns("0000001", 90).ToString());
+            for (int i = 0; i < 10; i++)
+                initialSeed.Add(searchASeed(7, 100));
+
+            Console.WriteLine("Best seed\n");
+            for (int i = 0; i < initialSeed.Count(); i++)
+            {
+                //Console.WriteLine(initialSeed[i]);
+                using (StreamWriter file = new StreamWriter("bestSeed.txt", true))
+                {
+                    file.WriteLine(initialSeed[i]);
+                }
+            }
+            //Console.WriteLine("Done");
         }
     }
 }

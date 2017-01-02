@@ -36,7 +36,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(162, 100);
+            this.button1.Location = new System.Drawing.Point(161, 65);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(145, 28);
             this.button1.TabIndex = 0;
@@ -46,7 +46,7 @@
             // 
             // textBox1
             // 
-            this.textBox1.Location = new System.Drawing.Point(162, 57);
+            this.textBox1.Location = new System.Drawing.Point(161, 26);
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(145, 20);
             this.textBox1.TabIndex = 1;
@@ -54,7 +54,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(12, 64);
+            this.label1.Location = new System.Drawing.Point(11, 29);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(144, 13);
             this.label1.TabIndex = 2;
@@ -62,11 +62,11 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(162, 137);
+            this.button2.Location = new System.Drawing.Point(161, 102);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(145, 28);
             this.button2.TabIndex = 3;
-            this.button2.Text = "Test";
+            this.button2.Text = "Generate Initial Seed";
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
@@ -74,7 +74,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(327, 177);
+            this.ClientSize = new System.Drawing.Size(327, 175);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.textBox1);
